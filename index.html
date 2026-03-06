@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pioneer · Settler · Town Planner — Equal Experts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Lexend', sans-serif; background: #F5F5F5; min-height: 100vh; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-out { animation: slideOut 0.2s ease forwards; }
+    @keyframes slideOut { to { opacity: 0; transform: translateX(-12px); } }
+    .bar-fill { transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .option-card { cursor: pointer; transition: all 0.15s ease; border: 2px solid #e0e0e0; background: white; }
+    .option-card:hover { border-color: #1795D4; background: #f0f8fd; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(23,149,212,0.12); }
+    .option-card.selected { border-color: #1795D4; background: #e8f4fb; }
+    .btn-primary { background: #1795D4; color: white; border: none; cursor: pointer; font-family: 'Lexend', sans-serif; font-weight: 500; transition: all 0.15s; }
+    .btn-primary:hover { background: #1282bb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(23,149,212,0.3); }
+    .btn-primary:disabled { background: #b0d4ea; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-outline { background: transparent; color: #22567C; border: 2px solid #22567C; cursor: pointer; font-family: 'Lexend', sans-serif; font-weight: 500; transition: all 0.15s; }
+    .btn-outline:hover { background: #22567C; color: white; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const questions = [
+      { id: 1, prompt: "You are starting work on something new and the path forward is unclear. What feels most natural?", options: [
+        { key: "A", text: "Explore different ideas quickly and see what emerges.", type: "pioneer" },
+        { key: "B", text: "Work out how to turn the early thinking into something practical.", type: "settler" },
+        { key: "C", text: "Define structure, constraints, and guardrails early.", type: "town_planner" }
+      ]},
+      { id: 2, prompt: "You inherit a rough but promising prototype. What is your first instinct?", options: [
+        { key: "A", text: "Push the idea further and test what else might be possible.", type: "pioneer" },
+        { key: "B", text: "Strengthen it so it can be used reliably.", type: "settler" },
+        { key: "C", text: "Bring in standards, controls, and consistency.", type: "town_planner" }
+      ]},
+      { id: 3, prompt: "A team is stuck using an old system that mostly works but has many flaws. What are you most likely to do?", options: [
+        { key: "A", text: "Challenge the assumptions and look for a fundamentally better approach.", type: "pioneer" },
+        { key: "B", text: "Improve it step by step so it becomes more usable and maintainable.", type: "settler" },
+        { key: "C", text: "Standardise it and reduce variation so it can be run more efficiently.", type: "town_planner" }
+      ]},
+      { id: 4, prompt: "Which kind of work gives you the most energy?", options: [
+        { key: "A", text: "Figuring out something that no one has solved yet.", type: "pioneer" },
+        { key: "B", text: "Turning a messy idea into something solid and workable.", type: "settler" },
+        { key: "C", text: "Making a proven system efficient, stable, and predictable.", type: "town_planner" }
+      ]},
+      { id: 5, prompt: "When there is ambiguity, your natural tendency is to:", options: [
+        { key: "A", text: "Move forward anyway and learn by experimenting.", type: "pioneer" },
+        { key: "B", text: "Reduce ambiguity by shaping the work into something clearer.", type: "settler" },
+        { key: "C", text: "Reduce ambiguity by introducing process and clearer rules.", type: "town_planner" }
+      ]},
+      { id: 6, prompt: "A new initiative has just been launched. Where do you naturally gravitate?", options: [
+        { key: "A", text: "Exploring bold ideas and testing new directions.", type: "pioneer" },
+        { key: "B", text: "Building something coherent from the early ideas.", type: "settler" },
+        { key: "C", text: "Designing how it will scale and operate consistently.", type: "town_planner" }
+      ]},
+      { id: 7, prompt: "A piece of work has become stable and well understood. What happens to your interest?", options: [
+        { key: "A", text: "I start looking for the next unknown or unproven area.", type: "pioneer" },
+        { key: "B", text: "I focus on improving quality and usefulness further.", type: "settler" },
+        { key: "C", text: "I focus on efficiency, repeatability, and control.", type: "town_planner" }
+      ]},
+      { id: 8, prompt: "When something is not working well in a team or system, what is your instinctive contribution?", options: [
+        { key: "A", text: "Introduce new thinking and challenge current assumptions.", type: "pioneer" },
+        { key: "B", text: "Refine what exists so it works better in practice.", type: "settler" },
+        { key: "C", text: "Bring clearer structure, consistency, and discipline.", type: "town_planner" }
+      ]},
+      { id: 9, prompt: "Which statement sounds most like you?", options: [
+        { key: "A", text: "I am at my best when exploring what could be possible.", type: "pioneer" },
+        { key: "B", text: "I am at my best when making things real and workable.", type: "settler" },
+        { key: "C", text: "I am at my best when making things dependable at scale.", type: "town_planner" }
+      ]},
+      { id: 10, prompt: "If you had to choose one role on a new piece of work, which would feel most natural?", options: [
+        { key: "A", text: "Discover the opportunity.", type: "pioneer" },
+        { key: "B", text: "Shape the solution.", type: "settler" },
+        { key: "C", text: "Operationalise the solution.", type: "town_planner" }
+      ]}
+    ];
+
+    const profileDescriptions = {
+      pioneer_dominant: { label: "Pioneer", color: "#F07C00", summary: "You appear most drawn to discovery, experimentation, and working in ambiguity. You are likely energised by new possibilities and less motivated by routine or mature systems." },
+      settler_dominant: { label: "Settler", color: "#1795D4", summary: "You appear most drawn to turning rough ideas into practical, reliable outcomes. You are likely energised by shaping, refining, and making things genuinely usable." },
+      town_planner_dominant: { label: "Town Planner", color: "#269C9E", summary: "You appear most drawn to structure, standardisation, and dependable execution at scale. You are likely energised by consistency, efficiency, and operational maturity." },
+      pioneer_settler_blend: { label: "Pioneer–Settler", color: "#F07C00", summary: "You appear comfortable both exploring new possibilities and shaping them into something workable. You may be especially valuable in early-stage product or service development." },
+      settler_town_planner_blend: { label: "Settler–Town Planner", color: "#1795D4", summary: "You appear comfortable refining what exists and creating the structure needed to run it well. You may be especially valuable where reliability and scale matter." },
+      pioneer_town_planner_blend: { label: "Pioneer–Town Planner", color: "#F07C00", summary: "You appear drawn to both bold new thinking and system-level structure. This is less common and may suggest you move between strategic innovation and operating model thinking depending on context." },
+      balanced_profile: { label: "Balanced", color: "#22567C", summary: "You appear relatively balanced across all three modes. This may suggest adaptability, or it may mean your preferences are more context-dependent." }
+    };
+
+    function getProfileType(scores) {
+      const { pioneer, settler, town_planner } = scores;
+      const sorted = [
+        { key: "pioneer", val: pioneer },
+        { key: "settler", val: settler },
+        { key: "town_planner", val: town_planner }
+      ].sort((a, b) => b.val - a.val);
+      const [first, second] = sorted;
+      const allWithin2 = (Math.max(pioneer, settler, town_planner) - Math.min(pioneer, settler, town_planner)) <= 2;
+      if (allWithin2) return "balanced_profile";
+      if (first.val - second.val >= 3) return `${first.key}_dominant`;
+      if (Math.abs(first.val - second.val) <= 2) {
+        const pair = [first.key, sorted[1].key].sort().join("_");
+        const blendMap = { "pioneer_settler": "pioneer_settler_blend", "pioneer_town_planner": "pioneer_town_planner_blend", "settler_town_planner": "settler_town_planner_blend" };
+        return blendMap[pair] || `${first.key}_dominant`;
+      }
+      return `${first.key}_dominant`;
+    }
+
+    function App() {
+      const [screen, setScreen] = useState("landing");
+      const [answers, setAnswers] = useState({});
+      const [currentQ, setCurrentQ] = useState(0);
+      const [selected, setSelected] = useState(null);
+      const [animating, setAnimating] = useState(false);
+
+      const handleNext = () => {
+        if (!selected) return;
+        const newAnswers = { ...answers, [currentQ]: selected };
+        setAnswers(newAnswers);
+        setAnimating(true);
+        setTimeout(() => {
+          setAnimating(false);
+          setSelected(null);
+          if (currentQ < questions.length - 1) { setCurrentQ(currentQ + 1); }
+          else { setScreen("results"); }
+        }, 200);
+      };
+
+      const handleRetake = () => { setAnswers({}); setCurrentQ(0); setSelected(null); setScreen("landing"); };
+
+      const computeScores = () => {
+        const scores = { pioneer: 0, settler: 0, town_planner: 0 };
+        Object.values(answers).forEach(type => { scores[type] = (scores[type] || 0) + 1; });
+        return scores;
+      };
+
+      const scores = screen === "results" ? computeScores() : null;
+      const profileType = scores ? getProfileType(scores) : null;
+      const profile = profileType ? profileDescriptions[profileType] : null;
+      const progress = (currentQ / questions.length) * 100;
+
+      return (
+        <div style={{ fontFamily: "'Lexend', sans-serif", minHeight: "100vh", background: "#F5F5F5" }}>
+          {/* Header */}
+          <header style={{ background: "#22567C", padding: "14px 32px", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, background: "#1795D4", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: "white", fontWeight: 700, fontSize: 14, letterSpacing: "-0.5px" }}>[=]</span>
+              </div>
+              <span style={{ color: "white", fontWeight: 400, fontSize: 16, letterSpacing: "-0.3px" }}>equal experts</span>
+            </div>
+            <div style={{ marginLeft: "auto", width: 3, height: 20, borderRadius: 2, background: "linear-gradient(180deg, #1795D4, #269C9E, #F07C00)" }} />
+          </header>
+          <div style={{ height: 4, background: "linear-gradient(90deg, #1795D4 0%, #269C9E 45%, #F07C00 100%)" }} />
+
+          {/* LANDING */}
+          {screen === "landing" && (
+            <div className="fade-in" style={{ maxWidth: 640, margin: "0 auto", padding: "64px 24px" }}>
+              <p style={{ fontSize: 11, color: "#1795D4", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Behavioural Reflection</p>
+              <h1 style={{ fontSize: 34, fontWeight: 400, color: "#22567C", lineHeight: 1.15, marginBottom: 20 }}>Pioneer · Settler · Town Planner</h1>
+              <div style={{ width: 48, height: 3, background: "linear-gradient(90deg, #1795D4, #269C9E)", borderRadius: 2, marginBottom: 28 }} />
+              <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.6, marginBottom: 16 }}>Different kinds of work call for different orientations. Some people are energised by ambiguity and discovery. Others thrive when shaping rough ideas into something real. Others bring clarity through structure and scale.</p>
+              <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.6, marginBottom: 40 }}>This short exercise helps you understand which patterns of work feel most natural to you — and how those preferences compare across the three modes.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 40 }}>
+                {[
+                  { label: "Pioneer", icon: "◎", color: "#F07C00", desc: "Explores, discovers, experiments in ambiguity" },
+                  { label: "Settler", icon: "◉", color: "#1795D4", desc: "Shapes rough ideas into reliable, usable outcomes" },
+                  { label: "Town Planner", icon: "▦", color: "#269C9E", desc: "Builds consistency, efficiency, and scale" }
+                ].map(m => (
+                  <div key={m.label} style={{ background: "white", borderRadius: 10, padding: "20px 16px", borderTop: `3px solid ${m.color}` }}>
+                    <div style={{ fontSize: 22, marginBottom: 8, color: m.color }}>{m.icon}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#22567C", marginBottom: 6 }}>{m.label}</div>
+                    <div style={{ fontSize: 12, color: "#666", lineHeight: 1.4 }}>{m.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, background: "white", borderRadius: 8, padding: "14px 18px", border: "1px solid #e0e0e0" }}>
+                <span style={{ color: "#1795D4", fontSize: 18 }}>⏱</span>
+                <span style={{ fontSize: 13, color: "#555" }}>10 questions · takes about 2 minutes · no right or wrong answers</span>
+              </div>
+              <button className="btn-primary" onClick={() => setScreen("instructions")} style={{ padding: "14px 36px", fontSize: 15, borderRadius: 8 }}>Start the assessment →</button>
+            </div>
+          )}
+
+          {/* INSTRUCTIONS */}
+          {screen === "instructions" && (
+            <div className="fade-in" style={{ maxWidth: 580, margin: "0 auto", padding: "64px 24px" }}>
+              <p style={{ fontSize: 11, color: "#1795D4", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Before you begin</p>
+              <h2 style={{ fontSize: 26, fontWeight: 400, color: "#22567C", marginBottom: 24 }}>A few things to keep in mind</h2>
+              <div style={{ background: "white", borderRadius: 12, padding: "28px", marginBottom: 32, borderLeft: "4px solid #1795D4" }}>
+                <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.7 }}>This short exercise is designed to understand how you naturally approach work.</p>
+                <br />
+                <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.7 }}>For each question, choose the response that best reflects your <strong>instinctive behaviour</strong> — not what you think sounds best or what your current role expects of you.</p>
+                <br />
+                <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.7 }}>There are no right or wrong answers.</p>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button className="btn-outline" onClick={() => setScreen("landing")} style={{ padding: "12px 24px", fontSize: 14, borderRadius: 8 }}>← Back</button>
+                <button className="btn-primary" onClick={() => { setScreen("quiz"); setCurrentQ(0); setAnswers({}); setSelected(null); }} style={{ padding: "12px 28px", fontSize: 14, borderRadius: 8 }}>I'm ready — let's go</button>
+              </div>
+            </div>
+          )}
+
+          {/* QUIZ */}
+          {screen === "quiz" && (
+            <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 24px" }}>
+              <div style={{ marginBottom: 36 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, color: "#1795D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>Question {currentQ + 1} of {questions.length}</span>
+                  <span style={{ fontSize: 11, color: "#999" }}>{Math.round(progress)}% complete</span>
+                </div>
+                <div style={{ height: 4, background: "#e0e0e0", borderRadius: 4, overflow: "hidden" }}>
+                  <div className="bar-fill" style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, #1795D4, #269C9E)", borderRadius: 4 }} />
+                </div>
+              </div>
+              <div className={animating ? "slide-out" : "fade-in"}>
+                <h2 style={{ fontSize: 20, fontWeight: 400, color: "#22567C", lineHeight: 1.35, marginBottom: 28 }}>{questions[currentQ].prompt}</h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+                  {questions[currentQ].options.map(opt => (
+                    <div key={opt.key} className={`option-card ${selected === opt.type ? "selected" : ""}`} onClick={() => setSelected(opt.type)}
+                      style={{ borderRadius: 10, padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 14 }}>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${selected === opt.type ? "#1795D4" : "#ccc"}`, background: selected === opt.type ? "#1795D4" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }}>
+                        {selected === opt.type && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: "#999", marginRight: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{opt.key}</span>
+                        <span style={{ fontSize: 14, color: "#212526", lineHeight: 1.5 }}>{opt.text}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn-primary" onClick={handleNext} disabled={!selected} style={{ padding: "13px 32px", fontSize: 14, borderRadius: 8 }}>
+                  {currentQ < questions.length - 1 ? "Next question →" : "See my profile →"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* RESULTS */}
+          {screen === "results" && scores && profile && (
+            <div className="fade-in" style={{ maxWidth: 660, margin: "0 auto", padding: "48px 24px" }}>
+              <p style={{ fontSize: 11, color: "#1795D4", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Your profile</p>
+              <h2 style={{ fontSize: 28, fontWeight: 400, color: "#22567C", marginBottom: 8 }}>{profile.label}</h2>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 32 }}>Based on your responses, this is the pattern of work you seem most naturally drawn to.</p>
+              <div style={{ background: "white", borderRadius: 12, padding: "28px", marginBottom: 24, border: "1px solid #e8e8e8" }}>
+                {[
+                  { key: "pioneer", label: "Pioneer", color: "#F07C00", icon: "◎" },
+                  { key: "settler", label: "Settler", color: "#1795D4", icon: "◉" },
+                  { key: "town_planner", label: "Town Planner", color: "#269C9E", icon: "▦" }
+                ].map(m => {
+                  const val = scores[m.key] || 0;
+                  return (
+                    <div key={m.key} style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ color: m.color, fontSize: 16 }}>{m.icon}</span>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: "#22567C" }}>{m.label}</span>
+                        </div>
+                        <span style={{ fontSize: 13, color: "#555", fontWeight: 500 }}>{val}/10</span>
+                      </div>
+                      <div style={{ height: 10, background: "#f0f0f0", borderRadius: 6, overflow: "hidden" }}>
+                        <div className="bar-fill" style={{ height: "100%", width: `${(val/10)*100}%`, background: m.color, borderRadius: 6 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ background: "white", borderRadius: 12, padding: "24px 28px", marginBottom: 20, borderLeft: `4px solid ${profile.color}` }}>
+                <p style={{ fontSize: 11, color: "#1795D4", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Interpretation</p>
+                <p style={{ fontSize: 15, color: "#212526", lineHeight: 1.65 }}>{profile.summary}</p>
+              </div>
+              <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "16px 20px", marginBottom: 20, border: "1px solid #e8e8e8" }}>
+                <p style={{ fontSize: 12, color: "#777", lineHeight: 1.55 }}><strong style={{ color: "#555" }}>This is not a personality test.</strong> It is a simple reflection of the work patterns you appear to prefer based on your answers. This profile is a guide, not a fixed label. Many people operate across all three modes depending on context.</p>
+              </div>
+              <div style={{ background: "#fffaf5", border: "1px solid #fde8cc", borderRadius: 10, padding: "14px 18px", marginBottom: 32 }}>
+                <p style={{ fontSize: 12, color: "#8a5200", lineHeight: 1.5 }}>This is a lightweight behavioural reflection tool, not a validated psychometric assessment. It is intended to prompt useful discussion, not to define someone permanently.</p>
+              </div>
+              <button className="btn-primary" onClick={handleRetake} style={{ padding: "12px 28px", fontSize: 14, borderRadius: 8 }}>↺ Retake assessment</button>
+            </div>
+          )}
+
+          {/* Footer */}
+          <footer style={{ background: "#212526", marginTop: 64, padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 28, height: 28, background: "#1795D4", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: "white", fontWeight: 700, fontSize: 10 }}>[=]</span>
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>equal experts</span>
+            </div>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>Pioneer · Settler · Town Planner</span>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
