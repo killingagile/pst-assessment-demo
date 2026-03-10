@@ -35,7 +35,7 @@
     // ============================================================
     // CONFIGURATION — paste your Apps Script Web App URL here
     // ============================================================
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAcduwjKlr8jfsU4hHK6aM0yOOZY2b331031PMsvbToXCoFYqsmMYRlYZr-zQw1xnkfQ/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYB__sxAQ1AXq2U-_usWzrZfylTR61JUzU7gmR-QkxiEfQQMAvfUklofnXbHrJZUdoUA/exec";
     // ============================================================
 
     const questions = [
@@ -123,24 +123,21 @@
     async function submitResults(scores, profileType, profileLabel) {
       if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
       try {
-        await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            timestamp: new Date().toISOString(),
-            scores,
-            percentages: {
-              pioneer:     Math.round((scores.pioneer     / 10) * 100),
-              settler:     Math.round((scores.settler     / 10) * 100),
-              town_planner: Math.round((scores.town_planner / 10) * 100)
-            },
-            profile_type:  profileType,
-            profile_label: profileLabel
-          })
+        const params = new URLSearchParams({
+          timestamp:     new Date().toISOString(),
+          pioneer:       scores.pioneer,
+          settler:       scores.settler,
+          town_planner:  scores.town_planner,
+          p_pioneer:     Math.round((scores.pioneer      / 10) * 100),
+          p_settler:     Math.round((scores.settler      / 10) * 100),
+          p_town_planner: Math.round((scores.town_planner / 10) * 100),
+          profile_type:  profileType,
+          profile_label: profileLabel
         });
+        // Use an image ping — works cross-origin with no CORS issues
+        const img = new Image();
+        img.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
       } catch (err) {
-        // Silent fail — don't interrupt the user experience
         console.warn("Could not submit results:", err);
       }
     }
