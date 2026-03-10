@@ -38,6 +38,8 @@
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYB__sxAQ1AXq2U-_usWzrZfylTR61JUzU7gmR-QkxiEfQQMAvfUklofnXbHrJZUdoUA/exec";
     // ============================================================
 
+    const VERSION = "1.1.0";
+
     const questions = [
       { id: 1, prompt: "You are starting work on something new and the path forward is unclear. What feels most natural?", options: [
         { key: "A", text: "Explore different ideas quickly and see what emerges.", type: "pioneer" },
@@ -120,7 +122,7 @@
       return `${first.key}_dominant`;
     }
 
-    async function submitResults(scores, profileType, profileLabel) {
+    async function submitResults(scores, profileType, profileLabel, name, email) {
       if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
       try {
         const params = new URLSearchParams({
@@ -131,6 +133,8 @@
           p_pioneer:     Math.round((scores.pioneer      / 10) * 100),
           p_settler:     Math.round((scores.settler      / 10) * 100),
           p_town_planner: Math.round((scores.town_planner / 10) * 100),
+          name:          name,
+          email:         email,
           profile_type:  profileType,
           profile_label: profileLabel
         });
@@ -160,6 +164,9 @@
       const [currentQ, setCurrentQ] = useState(0);
       const [selected, setSelected] = useState(null);
       const [animating, setAnimating] = useState(false);
+      const [name, setName] = useState("");
+      const [email, setEmail] = useState("");
+      const [fieldErrors, setFieldErrors] = useState({});
 
       const handleNext = () => {
         if (!selected) return;
@@ -177,13 +184,13 @@
             Object.values(newAnswers).forEach(type => { scores[type] = (scores[type] || 0) + 1; });
             const profileType = getProfileType(scores);
             const profileLabel = profileDescriptions[profileType].label;
-            submitResults(scores, profileType, profileLabel);
+            submitResults(scores, profileType, profileLabel, name, email);
             setScreen("results");
           }
         }, 200);
       };
 
-      const handleRetake = () => { setAnswers({}); setCurrentQ(0); setSelected(null); setScreen("landing"); };
+      const handleRetake = () => { setAnswers({}); setCurrentQ(0); setSelected(null); setName(""); setEmail(""); setFieldErrors({}); setScreen("landing"); };
 
       const computeScores = () => {
         const scores = { pioneer: 0, settler: 0, town_planner: 0 };
@@ -253,7 +260,52 @@
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <button className="btn-outline" onClick={() => setScreen("landing")} style={{ padding: "12px 24px", fontSize: 14, borderRadius: 8 }}>← Back</button>
-                <button className="btn-primary" onClick={() => { setScreen("quiz"); setCurrentQ(0); setAnswers({}); setSelected(null); }} style={{ padding: "12px 28px", fontSize: 14, borderRadius: 8 }}>I'm ready — let's go</button>
+                <button className="btn-primary" onClick={() => { setScreen("details"); }} style={{ padding: "12px 28px", fontSize: 14, borderRadius: 8 }}>I'm ready — let's go</button>
+              </div>
+            </div>
+          )}
+
+
+          {/* DETAILS */}
+          {screen === "details" && (
+            <div className="fade-in" style={{ maxWidth: 580, margin: "0 auto", padding: "64px 24px" }}>
+              <p style={{ fontSize: 11, color: "#1795D4", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Before we start</p>
+              <h2 style={{ fontSize: 26, fontWeight: 400, color: "#22567C", marginBottom: 8 }}>Who are you?</h2>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 32, lineHeight: 1.6 }}>Please use your Equal Experts email address so we can match results across the network.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 32 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#22567C", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Full name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={e => { setName(e.target.value); setFieldErrors(fe => ({ ...fe, name: null })); }}
+                    placeholder="e.g. Alex Smith"
+                    style={{ width: "100%", padding: "12px 16px", fontSize: 14, fontFamily: "'Lexend', sans-serif", border: `2px solid ${fieldErrors.name ? "#e53e3e" : "#e0e0e0"}`, borderRadius: 8, outline: "none", color: "#212526", background: "white" }}
+                  />
+                  {fieldErrors.name && <p style={{ fontSize: 12, color: "#e53e3e", marginTop: 6 }}>{fieldErrors.name}</p>}
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#22567C", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Equal Experts email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setFieldErrors(fe => ({ ...fe, email: null })); }}
+                    placeholder="e.g. alex.smith@equalexperts.com"
+                    style={{ width: "100%", padding: "12px 16px", fontSize: 14, fontFamily: "'Lexend', sans-serif", border: `2px solid ${fieldErrors.email ? "#e53e3e" : "#e0e0e0"}`, borderRadius: 8, outline: "none", color: "#212526", background: "white" }}
+                  />
+                  {fieldErrors.email && <p style={{ fontSize: 12, color: "#e53e3e", marginTop: 6 }}>{fieldErrors.email}</p>}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button className="btn-outline" onClick={() => setScreen("instructions")} style={{ padding: "12px 24px", fontSize: 14, borderRadius: 8 }}>← Back</button>
+                <button className="btn-primary" onClick={() => {
+                  const errors = {};
+                  if (!name.trim()) errors.name = "Please enter your name.";
+                  if (!email.trim()) errors.email = "Please enter your email address.";
+                  else if (!email.includes("@")) errors.email = "Please enter a valid email address.";
+                  if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+                  setScreen("quiz"); setCurrentQ(0); setAnswers({}); setSelected(null);
+                }} style={{ padding: "12px 28px", fontSize: 14, borderRadius: 8 }}>Start the questions →</button>
               </div>
             </div>
           )}
@@ -344,7 +396,10 @@
               </div>
               <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>equal experts</span>
             </div>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>Pioneer · Settler · Town Planner</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>Pioneer · Settler · Town Planner</span>
+              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 10 }}>v{VERSION}</span>
+            </div>
           </footer>
         </div>
       );
