@@ -142,6 +142,18 @@
       }
     }
 
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Shuffle option order once per page load so Pioneer is not always option A
+    const shuffledQuestions = questions.map(q => ({ ...q, options: shuffle(q.options) }));
+
     function App() {
       const [screen, setScreen] = useState("landing");
       const [answers, setAnswers] = useState({});
@@ -157,7 +169,7 @@
         setTimeout(() => {
           setAnimating(false);
           setSelected(null);
-          if (currentQ < questions.length - 1) {
+          if (currentQ < shuffledQuestions.length - 1) {
             setCurrentQ(currentQ + 1);
           } else {
             // Compute and submit before showing results
@@ -182,7 +194,7 @@
       const scores = screen === "results" ? computeScores() : null;
       const profileType = scores ? getProfileType(scores) : null;
       const profile = profileType ? profileDescriptions[profileType] : null;
-      const progress = (currentQ / questions.length) * 100;
+      const progress = (currentQ / shuffledQuestions.length) * 100;
 
       return (
         <div style={{ fontFamily: "'Lexend', sans-serif", minHeight: "100vh", background: "#F5F5F5" }}>
@@ -251,7 +263,7 @@
             <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 24px" }}>
               <div style={{ marginBottom: 36 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, color: "#1795D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>Question {currentQ + 1} of {questions.length}</span>
+                  <span style={{ fontSize: 11, color: "#1795D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>Question {currentQ + 1} of {shuffledQuestions.length}</span>
                   <span style={{ fontSize: 11, color: "#999" }}>{Math.round(progress)}% complete</span>
                 </div>
                 <div style={{ height: 4, background: "#e0e0e0", borderRadius: 4, overflow: "hidden" }}>
@@ -259,9 +271,9 @@
                 </div>
               </div>
               <div className={animating ? "slide-out" : "fade-in"}>
-                <h2 style={{ fontSize: 20, fontWeight: 400, color: "#22567C", lineHeight: 1.35, marginBottom: 28 }}>{questions[currentQ].prompt}</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 400, color: "#22567C", lineHeight: 1.35, marginBottom: 28 }}>{shuffledQuestions[currentQ].prompt}</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
-                  {questions[currentQ].options.map(opt => (
+                  {shuffledQuestions[currentQ].options.map(opt => (
                     <div key={opt.key} className={`option-card ${selected === opt.type ? "selected" : ""}`} onClick={() => setSelected(opt.type)}
                       style={{ borderRadius: 10, padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 14 }}>
                       <div style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${selected === opt.type ? "#1795D4" : "#ccc"}`, background: selected === opt.type ? "#1795D4" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }}>
@@ -275,7 +287,7 @@
                   ))}
                 </div>
                 <button className="btn-primary" onClick={handleNext} disabled={!selected} style={{ padding: "13px 32px", fontSize: 14, borderRadius: 8 }}>
-                  {currentQ < questions.length - 1 ? "Next question →" : "See my profile →"}
+                  {currentQ < shuffledQuestions.length - 1 ? "Next question →" : "See my profile →"}
                 </button>
               </div>
             </div>
